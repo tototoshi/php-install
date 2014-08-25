@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -e
+
+PREFIX=
+VERSION=
+
+WORKDIR=$(mktemp -t temp.XXXXXX)
+rm "$WORKDIR"
+mkdir "$WORKDIR"
+__cleanup () {
+    rm -rf "$WORKDIR"  
+}
+trap __cleanup EXIT
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --prefix)
+            PREFIX=$2
+            shift
+            shift
+            ;;
+        *)
+            VERSION=$1
+            shift
+            ;;
+    esac
+done
+
+if [ "$VERSION" == "" ]; then
+    echo "VERSION required"
+    exit 1
+fi
+
+if [ "$PREFIX" == "" ]; then
+    OPTION_PREFIX=
+else
+    OPTION_PREFIX="--prefix=$PREFIX"
+fi
+
+if [ $(uname) == "Linux" ]; then
+    OPTION_ICU_DIR=""
+    OPTION_OPENSSL="--with-openssl"
+elif [ $(uname) == "Darwin" ]; then
+    OPTION_ICU_DIR="--with-icu-dir=$(brew --prefix icu4c)"
+    OPTION_OPENSSL="--with-openssl-dir=$(brew --prefix openssl)"
+else
+    echo "Unsupported operating system"
+    exit 1
+fi
+
+if echo "$VERSION" | grep '^5.3\|^5.4' > /dev/null; then
+    OPTION_OPCACHE=""
+else
+    OPTION_OPCACHE="--enable-opcache"
+fi
+
+if echo "$VERSION" | grep '^5.6' | grep RC > /dev/null; then
+    DOWNLOAD_URL="http://downloads.php.net/tyrael/php-${VERSION}.tar.gz"
+else
+    DOWNLOAD_URL="http://jp1.php.net/get/php-${VERSION}.tar.gz/from/this/mirror"
+fi
+
+
+(
+    cd $WORKDIR
+
+    wget -O php-${VERSION}.tar.gz "$DOWNLOAD_URL"
+
+    tar xf php-${VERSION}.tar.gz
+
+    (
+        cd php-${VERSION}
+
+        ./configure $OPTION_PREFIX \
+            --with-zlib \
+            --with-curl \
+            $OPTION_ICU_DIR \
+            --with-mysql=mysqlnd \
+            --with-pdo-mysql=mysqlnd \
+            $OPTION_OPENSSL \
+            --with-mcrypt \
+            --with-iconv \
+            --with-pcre-regex \
+            --with-gd \
+            --enable-fpm \
+            --enable-exif \
+            --enable-ftp \
+            --enable-gd-native-ttf \
+            --enable-gd-jis-conv \
+            --enable-intl \
+            --enable-mbstring \
+            $OPTION_OPCACHE \
+            --enable-pcntl \
+            --enable-shmop \
+            --enable-soap \
+            --enable-sockets \
+            --enable-sysvmsg \
+            --enable-sysvsem \
+            --enable-sysvshm \
+            --enable-wddx \
+            --enable-zip \
+            --enable-mysqlnd
+
+
+        # See:
+        #  "How to compile PHP-5.3 on 64bit Linux/MacOS | Ant's ATField"
+        #  http://blog.gcos.me/2012-10-19_how-to-compile-php53-on-64bit-linux-macos.html
+        if echo "$VERSION" | grep '^5.3' > /dev/null; then
+            sed -i -e '/^BUILD_/ s/\$(CC)/\$(CXX)/g' Makefile
+        fi
+
+        make && make install
+
+    )
+)
