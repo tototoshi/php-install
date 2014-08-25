@@ -2,6 +2,12 @@
 
 My PHP installer for PHP 5.3-5.5 like [xbuild](https://github.com/tagomoris/xbuild).
 
+## Install
+
+```
+curl https://raw.githubusercontent.com/tototoshi/php-install/master/php-install > ~/bin/php-install && chmod 0755 !#:3
+```
+
 ## Usage
 
 ```
