@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+#
+# Example:
+#   ./nginx-install --http-port 3333 \
+#                   --fastcgi-port 9001 \
+#                   --document-root ./htdocs \
+#                   --prefix $HOME/opt/nginx-1.6.1 \
+#                   1.6.1
+#
+
+set -eu
+
+PREFIX=
+VERSION=
+DOCUMENT_ROOT=
+HTTP_PORT=80
+FASTCGI_PORT=9000
+
+WORKDIR=$(mktemp -t temp.XXXXXX)
+rm "$WORKDIR"
+mkdir "$WORKDIR"
+__cleanup () {
+    rm -rf "$WORKDIR"  
+}
+trap __cleanup EXIT
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --prefix)
+            PREFIX=$2
+            shift
+            shift
+            ;;
+        --document-root)
+            DOCUMENT_ROOT=$(realpath $2)
+            shift
+            shift
+            ;;
+        --http-port)
+            HTTP_PORT=$2
+            shift
+            shift
+            ;;
+        --fastcgi-port)
+            FASTCGI_PORT=$2
+            shift
+            shift
+            ;;
+        *)
+            VERSION=$1
+            shift
+            ;;
+    esac
+done
+
+if [ "$DOCUMENT_ROOT" == "" ]; then
+    echo "--document-root required"
+    exit 1
+fi
+
+if [ "$VERSION" == "" ]; then
+    echo "version required"
+    exit 1
+fi
+
+if [ "$PREFIX" != "" ]; then
+    OPTION_PREFIX="--prefix=$PREFIX"
+else
+    OPTION_PREFIX=""
+fi
+
+(
+    cd "$WORKDIR"
+    wget -O nginx-${VERSION}.tar.gz http://nginx.org/download/nginx-${VERSION}.tar.gz
+
+    tar xf nginx-${VERSION}.tar.gz
+
+    (
+        cd nginx-${VERSION}
+        ./configure "$OPTION_PREFIX" --with-cc-opt="-Wno-deprecated-declarations"
+        make && make install
+
+        NGINX_CONF="
+http {
+
+    server {
+        listen       $HTTP_PORT;
+        server_name  localhost;
+
+        location / {
+            root   $DOCUMENT_ROOT;
+            index  index.html index.htm;
+        }
+
+        location ~ \.php$ {
+            fastcgi_pass   127.0.0.1:$FASTCGI_PORT;
+            fastcgi_index  index.php;
+            fastcgi_param  SCRIPT_FILENAME  \$document_root\$fastcgi_script_name;
+            include        fastcgi_params;
+        }
+
+    }
+
+}
+
+events {
+    worker_connections  128;
+}
+"
+        echo "$NGINX_CONF" > "${PREFIX}/conf/nginx.conf"
+    )
+
+)
