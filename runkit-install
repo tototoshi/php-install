@@ -5,7 +5,7 @@ WORKDIR=$(mktemp -t temp.XXXXXX)
 rm "$WORKDIR"
 mkdir "$WORKDIR"
 __cleanup () {
-    rm -rf "$WORKDIR"  
+    rm -rf "$WORKDIR"
 }
 trap __cleanup EXIT
 
@@ -18,7 +18,7 @@ php -v
         git clone https://github.com/tototoshi/runkit.git
         (
             cd runkit
-            git co origin/feature/fixed_build_error_against_5.6.0alpha3
+            git co origin/php5.6
         )
     else
         git clone https://github.com/zenovich/runkit.git
@@ -36,4 +36,3 @@ php -v
         echo 'extension="runkit.so"' >> "$INI_FILE_PATH"
     fi
 )
-
