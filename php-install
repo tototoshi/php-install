@@ -77,6 +77,7 @@ fi
             $OPTION_ICU_DIR \
             --with-mysql=mysqlnd \
             --with-pdo-mysql=mysqlnd \
+            --with-pdo-pgsql \
             $OPTION_OPENSSL \
             --with-mcrypt \
             --with-iconv \
