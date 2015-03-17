@@ -42,7 +42,7 @@ if [ $(uname) == "Linux" ]; then
     OPTION_OPENSSL="--with-openssl"
 elif [ $(uname) == "Darwin" ]; then
     OPTION_ICU_DIR="--with-icu-dir=$(brew --prefix icu4c)"
-    OPTION_OPENSSL="--with-openssl-dir=$(brew --prefix openssl)"
+    OPTION_OPENSSL="--with-openssl=$(brew --prefix openssl)"
 else
     echo "Unsupported operating system"
     exit 1
