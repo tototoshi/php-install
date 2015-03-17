@@ -1,6 +1,6 @@
 # php-install
 
-My PHP installer for PHP 5.3-5.5 like [xbuild](https://github.com/tagomoris/xbuild).
+My PHP installer for PHP 5.3-5.6 like [xbuild](https://github.com/tagomoris/xbuild).
 
 ## Install
 
