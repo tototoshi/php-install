@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 PREFIX=
 VERSION=
@@ -8,7 +8,7 @@ WORKDIR=$(mktemp -t temp.XXXXXX)
 rm "$WORKDIR"
 mkdir "$WORKDIR"
 __cleanup () {
-    rm -rf "$WORKDIR"  
+    rm -rf "$WORKDIR"
 }
 trap __cleanup EXIT
 
@@ -54,8 +54,16 @@ else
     OPTION_OPCACHE="--enable-opcache"
 fi
 
+if echo "$VERSION" | grep '^7' > /dev/null; then
+    OPTION_WITH_MYSQL=""
+else
+    OPTION_WITH_MYSQL="--with-mysql=mysqlnd"
+fi
+
 if echo "$VERSION" | grep '^5.6' | grep RC > /dev/null; then
     DOWNLOAD_URL="http://downloads.php.net/tyrael/php-${VERSION}.tar.gz"
+elif echo "$VERSION" | grep '^7' > /dev/null; then
+    DOWNLOAD_URL="http://downloads.php.net/~ab/php-${VERSION}.tar.gz"
 else
     DOWNLOAD_URL="http://jp1.php.net/get/php-${VERSION}.tar.gz/from/this/mirror"
 fi
@@ -75,7 +83,7 @@ fi
             --with-zlib \
             --with-curl \
             $OPTION_ICU_DIR \
-            --with-mysql=mysqlnd \
+            $OPTION_WITH_MYSQL \
             --with-pdo-mysql=mysqlnd \
             --with-pdo-pgsql \
             $OPTION_OPENSSL \
